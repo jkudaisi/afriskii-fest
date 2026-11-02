@@ -290,9 +290,9 @@ const icons = { bonfire: '🔥', pool: '🌊', apres: '🪩', gala: '🥂' };
 fetch('assets/clips/clips.json').then(r => r.json()).catch(() => ({})).then(man => {
   document.querySelectorAll('.clip').forEach(fig => {
     const k = fig.dataset.clip, vid = fig.querySelector('video'), m = man[k];
-    if (m && m.img) { vid.remove(); const im = new Image(); im.src = m.img; im.alt = m.alt || ''; im.loading = 'lazy'; im.decoding = 'async'; im.className = 'clipimg'; fig.prepend(im); if (m.stock) { const tg = document.createElement('span'); tg.className = 'stocktag'; tg.textContent = 'Stock photo'; fig.append(tg); } }
+    if (m && m.img) { vid.remove(); const im = new Image(); im.src = m.img; im.alt = m.alt || ''; im.loading = 'lazy'; im.decoding = 'async'; im.className = 'clipimg'; fig.prepend(im); }
     else if (m && m.src) { vid.src = m.src; if (m.poster) vid.poster = m.poster; const io = new IntersectionObserver(([e]) => { if (e.isIntersecting && !RM) vid.play().catch(() => {}); else vid.pause(); }, { threshold: .25 }); io.observe(fig); }
-    else { vid.remove(); const ph = document.createElement('div'); ph.className = 'ph'; ph.innerHTML = `<em>${icons[k]}</em>2026 footage<small>Clip by @jedit.jed goes here</small>`; fig.prepend(ph); }
+    else { vid.remove(); const ph = document.createElement('div'); ph.className = 'ph'; ph.innerHTML = `<em>${icons[k]}</em>2026 footage`; fig.prepend(ph); }
   });
 });
 

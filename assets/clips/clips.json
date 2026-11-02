@@ -1,1 +1,6 @@
-{}
+{
+  "bonfire": { "img": "assets/stock/bonfire.webp", "alt": "Friends around a bonfire in the snow at night", "stock": true },
+  "pool":    { "img": "assets/stock/pool.webp", "alt": "Friends splashing at a pool party", "stock": true },
+  "apres":   { "img": "assets/stock/apres.webp", "alt": "Partygoers at a night party", "stock": true },
+  "gala":    { "img": "assets/stock/gala.webp", "alt": "Woman in a white dress celebrating with a confetti popper", "stock": true }
+}

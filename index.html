@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Instrument+Sans:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"}}</script>
 </head>
 <body>
 <canvas id="gl" aria-hidden="true"></canvas>
@@ -19,7 +19,7 @@
 <header class="bar">
   <a class="logo" href="#top">AFRI<span>SKII</span></a>
   <div class="trail" aria-hidden="true"><i id="skier"></i></div>
-  <a class="btn small" href="https://linktr.ee/Afriskiifest" target="_blank" rel="noopener">RSVP</a>
+  <button class="btn small" data-checkout>Tickets</button>
 </header>
 
 <main id="top">
@@ -87,7 +87,7 @@
     <h2>Clip one on.</h2>
     <div class="jacket" aria-hidden="true"><div class="zip"></div><div class="ring" id="ring"></div></div>
     <div class="rack">
-      <article class="pass" data-name="Après All Access">
+      <article class="pass" data-name="Après All Access" data-tier="access">
         <div class="hole"></div>
         <p class="tier">Tier 1 · limited</p>
         <h3>Après Ski All Access</h3>
@@ -95,7 +95,7 @@
         <p>Every party. All White, pool, bonfire, both après nights. No skiing included.</p>
         <button class="btn clipbtn">Clip it on</button>
       </article>
-      <article class="pass blue" data-name="Ski Day Pass">
+      <article class="pass blue" data-name="Ski Day Pass" data-tier="ski">
         <div class="hole"></div>
         <p class="tier">Add-on</p>
         <h3>Ski & Snowboard Day Pass</h3>
@@ -103,7 +103,7 @@
         <p>One full day on the mountain. Equipment, lift ticket and a lesson. First timers to pros.</p>
         <button class="btn clipbtn">Clip it on</button>
       </article>
-      <article class="pass gold" data-name="Stay Slay">
+      <article class="pass gold" data-name="Stay Slay" data-tier="shared">
         <div class="hole"></div>
         <p class="tier">With a room</p>
         <h3>Stay Slay</h3>
@@ -114,7 +114,7 @@
     </div>
     <div class="clipped" id="clipped" hidden>
       <p><b id="clippedName"></b> is on your jacket.</p>
-      <a class="btn" href="https://makenaevents.com/afriskii" target="_blank" rel="noopener">Get it on the ticket page</a>
+      <button class="btn" id="clippedBuy">Check out</button>
     </div>
     <p class="note">Deposits and payment plans available. Prices from the partner ticket page and may change as tiers sell.</p>
   </section>
@@ -134,10 +134,27 @@
   <section class="stop finale" data-stop="gondola">
     <div class="gondola" aria-hidden="true"><div class="cable"></div><div class="cab"><i></i><i></i></div></div>
     <h2 class="snowy small"><span>See you on</span><span>the mountain.</span></h2>
-    <a class="btn big" href="https://linktr.ee/Afriskiifest" target="_blank" rel="noopener">RSVP</a>
+    <div class="finbtns"><button class="btn big" data-checkout>Get tickets</button><a class="btn big ghost" href="https://linktr.ee/Afriskiifest" target="_blank" rel="noopener">RSVP</a></div>
     <p class="links"><a href="https://www.instagram.com/afriskiifest/" target="_blank" rel="noopener">Instagram</a> · <a href="https://www.tiktok.com/@afriskii.fest" target="_blank" rel="noopener">TikTok</a> · <a href="mailto:contact@afriskiifest.com">contact@afriskiifest.com</a></p>
   </section>
 </main>
+
+
+<div class="co" id="co" hidden role="dialog" aria-modal="true" aria-labelledby="coTitle">
+  <div class="co-bg" data-close></div>
+  <div class="co-sheet">
+    <button class="co-x" data-close aria-label="Close">×</button>
+    <p class="kicker">Afriskii x Makena · Feb 4 to 7, 2027</p>
+    <h2 id="coTitle">Pick your pass</h2>
+    <div class="co-list" id="coList"></div>
+    <div class="co-sum">
+      <div><p class="co-lbl">Estimated total</p><p class="co-tot" id="coTot">$0</p><p class="co-fine" id="coFine"></p></div>
+      <p class="co-group" id="coGroup"></p>
+    </div>
+    <button class="btn co-go" id="coGo" disabled>Continue to secure checkout</button>
+    <p class="co-secure">🔒 Secure checkout by Makena (Stripe). Payment happens on makenaevents.com; this site never sees your card. Opens in a new tab with your pass ready to pick.</p>
+  </div>
+</div>
 
 <footer>
   <p>Footage: @jedit.jed · Organized by @ttkulture with Makena Entertainment and TLC Vacays.</p>

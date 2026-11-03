@@ -9,14 +9,19 @@ const MOBILE = matchMedia('(max-width: 760px)').matches || matchMedia('(pointer:
 
 /* ---------- smooth scroll ---------- */
 let lenis = null;
-if (!RM && window.Lenis) { lenis = new Lenis({ lerp: 0.09 }); const raf = t => { lenis.raf(t); requestAnimationFrame(raf); }; requestAnimationFrame(raf); }
+const TOUCH = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+if (!RM && !TOUCH && window.Lenis) { lenis = new Lenis({ lerp: 0.09 }); const raf = t => { lenis.raf(t); requestAnimationFrame(raf); }; requestAnimationFrame(raf); }
 document.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); lenis ? lenis.scrollTo(0) : scrollTo(0, 0); }));
 
 /* ---------- three (v2: physically based night) ---------- */
 const canvas = document.getElementById('gl');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: !MOBILE, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, MOBILE ? 1.25 : 1.75));
-renderer.setSize(innerWidth, innerHeight);
+let DPR = Math.min(devicePixelRatio, MOBILE ? 1.25 : 1.75);
+renderer.setPixelRatio(DPR);
+// size to the large viewport so address-bar show/hide never resizes the canvas
+const vpH = () => Math.max(innerHeight, document.documentElement.clientHeight, MOBILE ? (canvas.clientHeight || 0) : 0);
+let VW = innerWidth, VH = vpH();
+renderer.setSize(VW, VH, false);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.9;
@@ -77,7 +82,7 @@ function pineGeo(snow) {
   if (!snow) { const tr = new THREE.CylinderGeometry(0.16, 0.24, 1.6, 6); tr.translate(0, 0.8, 0); parts.push(tr); }
   return mergeGeometries(parts.map(x => x.toNonIndexed()), false);
 }
-const treeN = MOBILE ? 420 : 1100;
+const treeN = MOBILE ? 260 : 1100;
 const needles = new THREE.InstancedMesh(pineGeo(false), new THREE.MeshStandardMaterial({ color: 0x1a2e22, roughness: 0.95, side: THREE.DoubleSide }), treeN);
 const loads = new THREE.InstancedMesh(pineGeo(true), new THREE.MeshStandardMaterial({ color: 0xe9f1ff, roughness: 0.85, side: THREE.DoubleSide }), treeN);
 needles.castShadow = !MOBILE; loads.castShadow = false; needles.receiveShadow = loads.receiveShadow = !MOBILE;
@@ -158,7 +163,7 @@ const endZ = -LEN + 40;
 
 // falling snow: 3 depth layers
 const snowLayers = [];
-[[MOBILE ? 700 : 1800, .16, 60], [MOBILE ? 400 : 1000, .32, 30], [MOBILE ? 80 : 160, .8, 12]].forEach(([n, size, spread]) => {
+[[MOBILE ? 380 : 1800, .16, 60], [MOBILE ? 220 : 1000, .32, 30], [MOBILE ? 50 : 160, .8, 12]].forEach(([n, size, spread]) => {
   const geo = new THREE.BufferGeometry(); const arr = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) { arr[i * 3] = (Math.random() - .5) * spread * 2; arr[i * 3 + 1] = Math.random() * 40; arr[i * 3 + 2] = -Math.random() * spread * 1.6; }
   geo.setAttribute('position', new THREE.BufferAttribute(arr, 3));
@@ -202,8 +207,12 @@ function palette(t) {
 const bump = (t, c, w) => Math.max(0, 1 - Math.abs(t - c) / w);
 
 let target = 0, prog = 0;
-const readScroll = () => { const max = document.documentElement.scrollHeight - innerHeight; target = max > 0 ? scrollY / max : 0; };
-addEventListener('scroll', readScroll, { passive: true }); readScroll();
+// measure once (and on width / orientation change), read scroll in rAF
+let maxScroll = 1, scrollQueued = false;
+const measure = () => { maxScroll = Math.max(1, document.documentElement.scrollHeight - (MOBILE ? document.documentElement.clientHeight : innerHeight)); };
+const readScroll = () => { scrollQueued = false; target = Math.min(1, Math.max(0, scrollY / maxScroll)); };
+addEventListener('scroll', () => { if (!scrollQueued) { scrollQueued = true; requestAnimationFrame(readScroll); } }, { passive: true });
+measure(); readScroll(); addEventListener('load', () => { measure(); readScroll(); });
 
 const look = new THREE.Vector3(), camPos = new THREE.Vector3();
 const mouse = { x: 0, y: 0 };
@@ -242,10 +251,24 @@ function frame() {
   if (skier) skier.style.left = (t * 100) + '%';
   gondola(t);
   composer ? composer.render() : renderer.render(scene, camera);
-  requestAnimationFrame(frame);
+  adapt(dt);
+  if (!hidden) requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); composer && composer.setSize(innerWidth, innerHeight); });
+function onResize(force) {
+  const w = innerWidth, h = vpH();
+  // on phones ignore height-only changes (URL bar) so the 3D never jumps
+  if (!force && MOBILE && w === VW && Math.abs(h - VH) < 160) return;
+  VW = w; VH = h; camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h, false); composer && composer.setSize(w, h); measure(); readScroll();
+  window.ScrollTrigger && ScrollTrigger.refresh();
+}
+addEventListener('resize', () => onResize(false));
+addEventListener('orientationchange', () => setTimeout(() => onResize(true), 300));
+// adaptive quality: drop pixel ratio if the phone can't hold ~40fps
+let fAcc = 0, fN = 0;
+function adapt(dt) { if (!MOBILE || DPR <= 1) return; fAcc += dt; if (++fN === 90) { if (fAcc / fN > 1 / 40) { DPR = 1; renderer.setPixelRatio(DPR); renderer.setSize(VW, VH, false); } fAcc = 0; fN = 0; } }
+// stop rendering when the tab is hidden
+let hidden = document.hidden; document.addEventListener('visibilitychange', () => { hidden = document.hidden; if (!hidden) { clock.getDelta(); requestAnimationFrame(frame); } });
 
 
 /* ---------- gondola DOM ---------- */
@@ -254,10 +277,10 @@ function gondola(t) { if (!cab) return; const k = THREE.MathUtils.smoothstep(t, 
 
 /* ---------- 2D push-able snow ---------- */
 (() => {
-  const c = document.getElementById('snow'), x = c.getContext('2d'); let w, h, dpr = Math.min(devicePixelRatio, 2);
+  const c = document.getElementById('snow'), x = c.getContext('2d'); let w, h, dpr = Math.min(devicePixelRatio, MOBILE ? 1.5 : 2);
   const N = RM ? 0 : (MOBILE ? 90 : 220), fl = [];
-  const size = () => { w = innerWidth; h = innerHeight; c.width = w * dpr; c.height = h * dpr; x.setTransform(dpr, 0, 0, dpr, 0, 0); };
-  size(); addEventListener('resize', size);
+  const size = () => { w = innerWidth; h = c.clientHeight || innerHeight; c.width = w * dpr; c.height = h * dpr; x.setTransform(dpr, 0, 0, dpr, 0, 0); };
+  size(); addEventListener('resize', () => { if (!MOBILE || innerWidth !== w) size(); }); addEventListener('orientationchange', () => setTimeout(size, 300));
   for (let i = 0; i < N; i++) fl.push({ x: Math.random() * w, y: Math.random() * h, r: .8 + Math.random() * 2.4, vx: 0, vy: 0, s: .3 + Math.random() * .9 });
   const P = { x: -999, y: -999, px: -999, py: -999 };
   const mv = e => { P.px = P.x; P.py = P.y; P.x = e.clientX; P.y = e.clientY; };
@@ -291,7 +314,7 @@ fetch('assets/clips/clips.json').then(r => r.json()).catch(() => ({})).then(man 
   document.querySelectorAll('.clip').forEach(fig => {
     const k = fig.dataset.clip, vid = fig.querySelector('video'), m = man[k];
     if (m && m.img) { vid.remove(); const im = new Image(); im.src = m.img; im.alt = m.alt || ''; im.loading = 'lazy'; im.decoding = 'async'; im.className = 'clipimg'; fig.prepend(im); }
-    else if (m && m.src) { vid.src = m.src; if (m.poster) vid.poster = m.poster; const io = new IntersectionObserver(([e]) => { if (e.isIntersecting && !RM) vid.play().catch(() => {}); else vid.pause(); }, { threshold: .25 }); io.observe(fig); }
+    else if (m && m.src) { vid.src = m.src; if (m.poster) vid.poster = m.poster; const io = new IntersectionObserver(([e]) => { if (e.isIntersecting && !RM && !document.hidden) vid.play().catch(() => {}); else vid.pause(); }, { threshold: .25 }); io.observe(fig); }
     else { vid.remove(); const ph = document.createElement('div'); ph.className = 'ph'; ph.innerHTML = `<em>${icons[k]}</em>2026 footage`; fig.prepend(ph); }
   });
 });
@@ -322,6 +345,7 @@ renderCrew();
 /* ---------- reveals ---------- */
 if (window.gsap && window.ScrollTrigger && !RM) {
   gsap.registerPlugin(ScrollTrigger);
+  ScrollTrigger.config({ ignoreMobileResize: true });
   if (lenis) lenis.on('scroll', ScrollTrigger.update);
   gsap.utils.toArray('.card,.clip,.pass,.clock,.passes h2,.crew h2,.finale .snowy').forEach(el => gsap.from(el, { y: 60, opacity: 0, duration: 1, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 88%' } }));
   gsap.from('.hero .snowy span', { y: 120, opacity: 0, stagger: .12, duration: 1.2, ease: 'power4.out', delay: .2 });

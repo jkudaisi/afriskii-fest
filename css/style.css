@@ -150,3 +150,47 @@ body.lightbg .bar .logo{color:var(--ink)}body.lightbg .trail{background:rgba(10,
 .stocktag{position:absolute;top:10px;right:10px;z-index:2;font:600 9px var(--b);letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.85);background:rgba(0,0,0,.35);padding:4px 7px;border-radius:6px;backdrop-filter:blur(4px)}
 .passimg{position:relative;margin:0 0 14px;border-radius:14px;overflow:hidden;aspect-ratio:4/5;max-height:230px;width:100%}
 .passimg img{width:100%;height:100%;object-fit:cover;object-position:50% 25%;display:block}
+/* ---------- mobile pass v2 ---------- */
+#gl,#snow,.tint{height:100vh;height:100lvh}
+#gl{pointer-events:none}
+html,body{touch-action:pan-y;overscroll-behavior-y:none}
+.stop{min-height:100vh;min-height:100svh}
+.bar{padding-top:max(16px,env(safe-area-inset-top));padding-left:max(clamp(16px,4vw,40px),env(safe-area-inset-left));padding-right:max(clamp(16px,4vw,40px),env(safe-area-inset-right))}
+.logo{display:inline-flex;align-items:center;min-height:44px}
+.btn.small{min-height:44px}
+.links a{display:inline-flex;align-items:center;min-height:44px;padding:0 6px}
+.co-x{width:44px;height:44px}
+.co-q button{width:44px;height:44px}
+.co-sheet{max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px)}
+footer{padding-bottom:max(60px,calc(30px + env(safe-area-inset-bottom)))}
+@media (max-width:760px){
+ .stop{padding:calc(84px + env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) 56px max(18px,env(safe-area-inset-left))}
+ .scene{gap:22px}
+ .card{max-width:none;width:100%;background:rgba(8,18,40,.78);border-radius:22px;padding:22px 20px}
+ .card.light{background:rgba(255,253,246,.92)}
+ .card h2{font-size:clamp(30px,9vw,44px)}
+ .card p{font-size:clamp(15px,4.2vw,17px)}
+ .clip{width:min(64vw,280px);max-height:50vh;max-height:50svh;transform:none}
+ .clip:hover{transform:none}
+ .snowy{font-size:clamp(64px,24vw,120px)}
+ .snowy.small{font-size:clamp(38px,12vw,64px)}
+ .tag{font-size:clamp(17px,5vw,22px)}
+ .scrollcue{margin-top:32px}
+ .pass{transform:none}.pass:hover{transform:none}
+ .btn.big{font-size:17px;padding:18px 34px}
+ .co-sheet{max-height:92vh;max-height:92dvh;padding-bottom:max(20px,env(safe-area-inset-bottom))}
+}
+@media (max-width:760px),(pointer:coarse){
+ .card,.clip figcaption,.stocktag,.co-bg{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+ .co-bg{background:rgba(4,10,24,.82)}
+ .clip figcaption{background:rgba(0,0,0,.6)}
+}
+@media (max-height:700px) and (max-width:760px){
+ .clock b{font-size:clamp(36px,12vw,56px)}
+ .clip{max-height:44svh}
+}
+/* html+body overflow-x:hidden turns body into a second scroller that eats touch swipes; clip doesn't */
+html,body{overflow-x:visible}
+body{overflow-x:hidden}
+html{overflow-x:visible}
+@supports (overflow:clip){html,body{overflow-x:clip}}
